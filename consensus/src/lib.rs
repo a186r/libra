@@ -16,7 +16,7 @@
 #[macro_use]
 extern crate prometheus;
 
-mod chained_bft;
+mod chained_bft; // LibraBFT的具体实现模块
 
 mod util;
 
@@ -25,10 +25,10 @@ pub use chained_bft::event_processor_fuzzing;
 
 /// Defines the public consensus provider traits to implement for
 /// use in the Libra Core blockchain.
-pub mod consensus_provider;
+pub mod consensus_provider; // 实现了Libra共识的接口，pub关键字声明该接口可以被外界访问
 
 mod counters;
 
-mod state_computer;
-mod state_replication;
+mod state_computer; // 状态计算模块，与执行模块相互通信，实现状态计算接口
+mod state_replication; // 状态复制模块，定义了SMR接口和StateComputer接口
 mod txn_manager;
