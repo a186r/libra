@@ -42,6 +42,7 @@ use std::{
     str::{self, FromStr},
     thread, time,
 };
+use libra_prost_ext::MessageExt;
 
 const CLIENT_WALLET_MNEMONIC_FILE: &str = "client.mnemonic";
 const GAS_UNIT_PRICE: u64 = 0;
@@ -249,11 +250,13 @@ impl ClientProxy {
     }
 
     /// Get the latest sequence number from validator for the account specified.
+    /// 获取nonce
     pub fn get_sequence_number(&mut self, space_delim_strings: &[&str]) -> Result<u64> {
         ensure!(
             space_delim_strings.len() == 2 || space_delim_strings.len() == 3,
             "Invalid number of arguments for getting sequence number"
         );
+        // 先从参数中读到地址
         let address = self.get_account_address_from_parameter(space_delim_strings[1])?;
         let sequence_number = self
             .get_account_resource_and_update(address)?
@@ -641,6 +644,7 @@ impl ClientProxy {
     }
 
     /// Get the latest account state from validator.
+    /// 从验证者获取最终的账户状态
     pub fn get_latest_account_state(
         &mut self,
         space_delim_strings: &[&str],
@@ -649,7 +653,9 @@ impl ClientProxy {
             space_delim_strings.len() == 2,
             "Invalid number of arguments to get latest account state"
         );
+        // 先拿到账户
         let account = self.get_account_address_from_parameter(space_delim_strings[1])?;
+        // 再查询状态
         self.get_account_state_and_update(account)
     }
 
@@ -686,6 +692,7 @@ impl ClientProxy {
     }
 
     /// Get committed txn by account and sequence number
+    /// 通过账户和nonce查询已提交的交易
     pub fn get_committed_txn_by_range(
         &mut self,
         space_delim_strings: &[&str],
@@ -725,10 +732,13 @@ impl ClientProxy {
 
     /// Get account address from parameter. If the parameter is string of address, try to convert
     /// it to address, otherwise, try to convert to u64 and looking at TestClient::accounts.
+    /// 从参数中获取地址
     pub fn get_account_address_from_parameter(&self, para: &str) -> Result<AccountAddress> {
+        // 如果是合法的libra地址，将字符串转换成地址
         if is_address(para) {
             ClientProxy::address_from_strings(para)
         } else {
+            // 如果不是，尝试转换成u64
             let account_ref_id = para.parse::<usize>().map_err(|error| {
                 format_parse_data_error(
                     "account_reference_id/account_address",
@@ -871,6 +881,7 @@ impl ClientProxy {
     }
 
     /// Get account resource from validator and update status of account if it is cached locally.
+    /// 从验证器(节点)获取账户资源，如果它缓存在本地顺便更新状态
     fn get_account_resource_and_update(
         &mut self,
         address: AccountAddress,
@@ -957,6 +968,7 @@ impl ClientProxy {
         }
     }
 
+    /// 将字符串转换成libra地址
     fn address_from_strings(data: &str) -> Result<AccountAddress> {
         let account_vec: Vec<u8> = hex::decode(data.parse::<String>()?)?;
         ensure!(

@@ -6,7 +6,8 @@ custom_edit_url: https://github.com/libra/libra/edit/master/admission_control/RE
 # Admission Control
 
 Admission Control (AC) is the public API endpoint for Libra and it takes public gRPC requests from clients.
-
+1. 准入控制是验证器节点的唯一外部接口。客户端对验证器节点发出的任何请求首先将转到准入控制组件。
+2. 准入控制对请求执行初始检查，以保护验证器节点的其他部分免受损坏或大量输入的影响。
 ## Overview
 Admission Control (AC) serves two types of requests from clients:
 1. SubmitTransaction - To submit a transaction to the associated validator.

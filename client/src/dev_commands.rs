@@ -7,6 +7,7 @@ use libra_types::waypoint::Waypoint;
 use std::time::{Duration, UNIX_EPOCH};
 
 /// Major command for account related operations.
+/// 与账户相关操作的主要命令
 pub struct DevCommand {}
 
 impl Command for DevCommand {

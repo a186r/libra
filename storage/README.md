@@ -10,6 +10,8 @@ The storage module provides reliable and efficient persistent storage for the
 entire set of data on the Libra Blockchain, as well as the necessary data used
 internally by Libra Core.
 
+1.存储用于持久化保存已经商定过的交易块及其执行结果
+
 ## Overview
 
 The storage module is designed to serve two primary purposes:

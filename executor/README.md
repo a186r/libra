@@ -7,6 +7,9 @@ custom_edit_url: https://github.com/libra/libra/edit/master/executor/README.md
 # Execution
 
 ## Overview
+1. 执行组件利用虚拟机执行交易。
+2. 执行的工作是协调交易块的执行，并保持一个瞬时状态，用户共识协商投票。
+3. 执行组件会维护执行结果的内存，直到共识将块提交到分布式数据库。
 
 The Libra Blockchain is a replicated state machine. Each validator is a replica
 of the system. Starting from genesis state S<sub>0</sub>, each transaction

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CargoProjects">
+    <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="693298b0-1e6d-4e70-8be8-94f02c93dcb8" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/vm-validator/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libra.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libra.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/admission_control/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/admission_control/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/account_commands.rs" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/account_commands.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/client_proxy.rs" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/client_proxy.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/commands.rs" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/commands.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/dev_commands.rs" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/dev_commands.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/grpc_client.rs" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/grpc_client.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/query_commands.rs" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/query_commands.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/transfer_commands.rs" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/transfer_commands.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/consensus/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/consensus/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/executor/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/executor/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mempool/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/mempool/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/storage/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/types/src/account_state_blob/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/types/src/account_state_blob/mod.rs" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitToolBoxStore">
+    <option name="recentBranches">
+      <RecentBranches>
+        <option name="branchesForRepo">
+          <list>
+            <RecentBranchesForRepo>
+              <option name="branches">
+                <list>
+                  <RecentBranch>
+                    <option name="branchName" value="reading" />
+                    <option name="lastUsedInstant" value="1587364323" />
+                  </RecentBranch>
+                  <RecentBranch>
+                    <option name="branchName" value="master" />
+                    <option name="lastUsedInstant" value="1587364322" />
+                  </RecentBranch>
+                </list>
+              </option>
+              <option name="repositoryRootUrl" value="file://$PROJECT_DIR$" />
+            </RecentBranchesForRepo>
+          </list>
+        </option>
+      </RecentBranches>
+    </option>
+  </component>
+  <component name="MacroExpansionManager">
+    <option name="directoryName" value="6o8w3d5c" />
+  </component>
+  <component name="ProjectId" id="1anH229ECGUGKEYD5sAzpzLFuH0" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="aspect.path.notification.shown" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
+  </component>
+  <component name="RustProjectSettings">
+    <option name="toolchainHomeDirectory" value="$USER_HOME$/.cargo/bin" />
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="693298b0-1e6d-4e70-8be8-94f02c93dcb8" name="Default Changelist" comment="" />
+      <created>1587364226172</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1587364226172</updated>
+      <workItem from="1587364229108" duration="201000" />
+      <workItem from="1587364442804" duration="7806000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="2" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
+  </component>
+</project>

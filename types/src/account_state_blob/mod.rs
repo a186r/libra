@@ -140,16 +140,21 @@ impl Arbitrary for AccountStateBlob {
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
 pub struct AccountStateWithProof {
     /// The transaction version at which this account state is seen.
+    /// 交易状态所在的交易版本
     pub version: Version,
     /// Blob value representing the account state. If this field is not set, it
     /// means the account does not exist.
+    /// 代表账户状态blob值，如果这个字段不存在，说明这个账户不存在
     pub blob: Option<AccountStateBlob>,
     /// The proof the client can use to authenticate the value.
+    /// 证明客户端可以用来验证值
     pub proof: AccountStateProof,
 }
 
+/// 共识后的账户状态
 impl AccountStateWithProof {
     /// Constructor.
+    /// 构造函数
     pub fn new(version: Version, blob: Option<AccountStateBlob>, proof: AccountStateProof) -> Self {
         Self {
             version,

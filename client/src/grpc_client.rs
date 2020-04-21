@@ -191,6 +191,7 @@ impl GRPCClient {
     }
 
     /// Get the latest account state blob from validator.
+    /// 从节点获取账户的最终状态
     pub(crate) fn get_account_blob(
         &mut self,
         address: AccountAddress,

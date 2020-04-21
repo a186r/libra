@@ -5,6 +5,7 @@ use crate::{client_proxy::ClientProxy, commands::*};
 use transaction_builder::get_transaction_name;
 
 /// Major command for query operations.
+/// 查询操作相关的主命令
 pub struct QueryCommand {}
 
 impl Command for QueryCommand {
@@ -29,6 +30,7 @@ impl Command for QueryCommand {
 }
 
 /// Sub commands to query balance for the account specified.
+/// 子命令，查询账户余额
 pub struct QueryCommandGetBalance {}
 
 impl Command for QueryCommandGetBalance {
@@ -54,6 +56,7 @@ impl Command for QueryCommandGetBalance {
 }
 
 /// Sub command to get the latest sequence number from validator for the account specified.
+/// 子命令，获取指定账户的最终序列号，相当于ether中的nonce
 pub struct QueryCommandGetSeqNum {}
 
 impl Command for QueryCommandGetSeqNum {
@@ -77,6 +80,7 @@ impl Command for QueryCommandGetSeqNum {
 }
 
 /// Command to query latest account state from validator.
+/// 从验证者节点查询最终的账户状态
 pub struct QueryCommandGetLatestAccountState {}
 
 impl Command for QueryCommandGetLatestAccountState {
@@ -109,6 +113,7 @@ impl Command for QueryCommandGetLatestAccountState {
 }
 
 /// Sub command  to get transaction by account and sequence number from validator.
+/// 子命令，获取nonce
 pub struct QueryCommandGetTxnByAccountSeq {}
 
 impl Command for QueryCommandGetTxnByAccountSeq {
@@ -151,6 +156,7 @@ impl Command for QueryCommandGetTxnByAccountSeq {
 }
 
 /// Sub command to query transactions by range from validator.
+///
 pub struct QueryCommandGetTxnByRange {}
 
 impl Command for QueryCommandGetTxnByRange {
@@ -195,6 +201,7 @@ impl Command for QueryCommandGetTxnByRange {
 }
 
 /// Sub command to query events from validator.
+/// 子命令，从验证者节点查询事件
 pub struct QueryCommandGetEvent {}
 
 impl Command for QueryCommandGetEvent {
