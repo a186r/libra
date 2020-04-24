@@ -9,6 +9,7 @@ mod state_store_test;
 use crate::{
     change_set::ChangeSet,
     ledger_counters::LedgerCounter,
+    // 这里就直接使用了2个Schema，后面可以很方便的用来编解码
     schema::{
         jellyfish_merkle_node::JellyfishMerkleNodeSchema, stale_node_index::StaleNodeIndexSchema,
     },
@@ -139,6 +140,7 @@ impl StateStore {
 
 impl TreeReader for StateStore {
     fn get_node_option(&self, node_key: &NodeKey) -> Result<Option<Node>> {
+        /// 直接使用JellyfishMerkleNodeSchema进行decode
         Ok(self.db.get::<JellyfishMerkleNodeSchema>(node_key)?)
     }
 

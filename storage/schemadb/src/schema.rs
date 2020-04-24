@@ -64,6 +64,7 @@ use std::fmt::Debug;
 /// // and seek like this:
 /// // iter.seek(&PrefixSeekKey);
 /// ```
+/// 为了实现方便，提供了宏
 #[macro_export]
 macro_rules! define_schema {
     ($schema_type: ident, $key_type: ty, $value_type: ty, $cf_name: expr) => {
@@ -77,7 +78,10 @@ macro_rules! define_schema {
     };
 }
 
+/// Rust中数据类型很丰富，但是RocksDB中无论Key还是Value都只能是字节序列，
+/// 因此在存取的时候必然涉及到不断的编码和解码，如何更方便的实现？
 /// This trait defines a type that can serve as a [`Schema::Key`].
+/// 因此Libra实现了Key的编解码Trait
 pub trait KeyCodec<S: Schema + ?Sized>: Sized + PartialEq + Debug {
     /// Converts `self` to bytes to be stored in DB.
     fn encode_key(&self) -> Result<Vec<u8>>;
@@ -86,6 +90,7 @@ pub trait KeyCodec<S: Schema + ?Sized>: Sized + PartialEq + Debug {
 }
 
 /// This trait defines a type that can serve as a [`Schema::Value`].
+/// 实现了Value的编解码Trait
 pub trait ValueCodec<S: Schema + ?Sized>: Sized + PartialEq + Debug {
     /// Converts `self` to bytes to be stored in DB.
     fn encode_value(&self) -> Result<Vec<u8>>;
@@ -114,6 +119,10 @@ where
 
 /// This trait defines a schema: an association of a column family name, the key type and the value
 /// type.
+/// 为了降低SchemaBatch中put、get、delete这些函数的参数形式的复杂度
+/// 以及提供COLUMN_FAMILY_NAME，所以提供了Schema这个trait
+/// 它没有任何成员函数，就是为了提供Key、Value的类型和COLUMN_FAMILY_NAME
+/// 通过Schema在SchemaBatch和DB中使用KeyCodec以及ValueCodec就比较方便了。
 pub trait Schema {
     /// The column family name associated with this struct.
     /// Note: all schemas within the same SchemaDB must have distinct column family names.

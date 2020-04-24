@@ -38,6 +38,7 @@ use libra_tools::tempdir::TempPath;
 /// |   224   |   21  |
 /// |   256   |   24  |
 /// +---------+-------+
+/// 助记词
 pub struct Mnemonic(Vec<&'static str>);
 
 impl ToString for Mnemonic {

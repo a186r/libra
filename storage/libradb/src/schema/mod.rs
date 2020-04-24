@@ -22,6 +22,7 @@ pub(crate) mod transaction_info;
 use anyhow::{ensure, Result};
 use schemadb::ColumnFamilyName;
 
+/// 数据在数据库中的存储
 pub(super) const EPOCH_BY_VERSION_CF_NAME: ColumnFamilyName = "epoch_by_version";
 pub(super) const EVENT_ACCUMULATOR_CF_NAME: ColumnFamilyName = "event_accumulator";
 pub(super) const EVENT_BY_KEY_CF_NAME: ColumnFamilyName = "event_by_key";

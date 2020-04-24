@@ -68,6 +68,7 @@ impl SchemaBatch {
     }
 
     /// Adds an insert/update operation to the batch.
+    /// put放入缓存Vec中
     pub fn put<S: Schema>(&mut self, key: &S::Key, value: &S::Value) -> Result<()> {
         let key = <S::Key as KeyCodec<S>>::encode_key(key)?;
         let value = <S::Value as ValueCodec<S>>::encode_value(value)?;
@@ -237,6 +238,7 @@ impl DB {
     }
 
     /// Reads single record by key.
+    /// 使用key读取单条记录
     pub fn get<S: Schema>(&self, schema_key: &S::Key) -> Result<Option<S::Value>> {
         let k = <S::Key as KeyCodec<S>>::encode_key(&schema_key)?;
         let cf_handle = self.get_cf_handle(S::COLUMN_FAMILY_NAME)?;
@@ -253,6 +255,7 @@ impl DB {
     }
 
     /// Writes single record.
+    /// 写入一条单独的记录
     pub fn put<S: Schema>(&self, key: &S::Key, value: &S::Value) -> Result<()> {
         let k = <S::Key as KeyCodec<S>>::encode_key(&key)?;
         let v = <S::Value as ValueCodec<S>>::encode_value(&value)?;
@@ -267,6 +270,7 @@ impl DB {
     ///
     /// `SK` has to be an explicit type parameter since
     /// https://github.com/rust-lang/rust/issues/44721
+    /// 删除从begin到end的所有key
     pub fn range_delete<S, SK>(&self, begin: &SK, end: &SK) -> Result<()>
     where
         S: Schema,
@@ -288,6 +292,7 @@ impl DB {
     }
 
     /// Writes a group of records wrapped in a [`SchemaBatch`].
+    /// 批量写入
     pub fn write_schemas(&self, batch: SchemaBatch) -> Result<()> {
         let db_batch = rocksdb::WriteBatch::new();
         for (cf_name, rows) in &batch.rows {
@@ -353,6 +358,7 @@ impl DB {
 
     /// Flushes all memtable data. If `sync` is true, the flush will wait until it's done. This is
     /// only used for testing `get_approximate_sizes_cf` in unit tests.
+    /// 刷到硬盘
     pub fn flush_all(&self, sync: bool) -> Result<()> {
         for cf_name in self.inner.cf_names() {
             let cf_handle = self.get_cf_handle(cf_name)?;

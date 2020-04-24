@@ -301,6 +301,8 @@ fn test_reopen() {
     }
 }
 
+// Rust中数据类型很丰富，但是RocksDB中无论Key还是Value都只能是字节序列，
+// 因此在存取的时候必然涉及到不断的编码和解码，如何更方便的实现？
 #[test]
 fn test_report_size() {
     let db = TestDB::new();

@@ -29,6 +29,7 @@ use rand::{rngs::EntropyRng, Rng};
 use std::{collections::HashMap, path::Path};
 
 /// WalletLibrary contains all the information needed to recreate a particular wallet
+/// WalletLibrary 包含重建一个钱包所有的信息
 pub struct WalletLibrary {
     mnemonic: Mnemonic,
     key_factory: KeyFactory,
@@ -125,6 +126,7 @@ impl WalletLibrary {
     /// Returns a list of all addresses controlled by this wallet that are currently held by the
     /// addr_map
     pub fn get_addresses(&self) -> Result<Vec<AccountAddress>> {
+        // 根据长度创建一个固定容量的空列表
         let mut ret = Vec::with_capacity(self.addr_map.len());
         let rev_map = self
             .addr_map
@@ -134,6 +136,7 @@ impl WalletLibrary {
         for i in 0..self.addr_map.len() as u64 {
             match rev_map.get(&i) {
                 Some(account_address) => {
+                    // 将得到的address push到之前创建的空列表中
                     ret.push(*account_address);
                 }
                 None => {
@@ -151,6 +154,7 @@ impl WalletLibrary {
     /// Simple public function that allows to sign a Libra RawTransaction with the PrivateKey
     /// associated to a particular AccountAddress. If the PrivateKey associated to an
     /// AccountAddress is not contained in the addr_map, then this function will return an Error
+    /// 签名一笔RawTx
     pub fn sign_txn(&self, txn: RawTransaction) -> Result<SignedTransaction> {
         if let Some(child) = self.addr_map.get(&txn.sender()) {
             let child_key = self.key_factory.private_child(child.clone())?;

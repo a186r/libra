@@ -31,6 +31,7 @@ pub(crate) struct MempoolService {
 
 #[tonic::async_trait]
 impl Mempool for MempoolService {
+    // 主要用于接收来自AC的新增Tx
     async fn add_transaction_with_validation(
         &self,
         request: tonic::Request<AddTransactionWithValidationRequest>,
@@ -49,6 +50,7 @@ impl Mempool for MempoolService {
                     .core_mempool
                     .lock()
                     .expect("[add txn] acquire mempool lock")
+                    // 这个函数只是简单的解析一下参数就很快进入到add_txn中，重点是add_txn这个函数
                     .add_txn(
                         transaction,
                         req.max_gas_cost,
@@ -64,6 +66,7 @@ impl Mempool for MempoolService {
         }
     }
 
+    // 服务于Consensus模块，从mempool中获取下一块可以打包的交易
     async fn get_block(
         &self,
         request: tonic::Request<GetBlockRequest>,
@@ -97,6 +100,7 @@ impl Mempool for MempoolService {
         Ok(tonic::Response::new(response))
     }
 
+    // 服务于Consensus模块，当交易被打包之后，缓存的相关Tx就可以移除了。
     async fn commit_transactions(
         &self,
         request: tonic::Request<CommitTransactionsRequest>,
@@ -109,6 +113,7 @@ impl Mempool for MempoolService {
         for transaction in &request.transactions {
             if let Ok(address) = AccountAddress::try_from(&transaction.sender[..]) {
                 let sequence_number = transaction.sequence_number;
+                // 移除缓存的交易
                 pool.remove_transaction(&address, sequence_number, transaction.is_rejected);
             }
         }
@@ -121,6 +126,7 @@ impl Mempool for MempoolService {
         Ok(tonic::Response::new(CommitTransactionsResponse::default()))
     }
 
+    // 健康检查，主要是检查缓冲区是否放得下更多的Tx.
     async fn health_check(
         &self,
         _request: tonic::Request<HealthCheckRequest>,

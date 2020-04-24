@@ -28,18 +28,27 @@ use std::{
 /// TransactionStore is in-memory storage for all transactions in mempool
 pub struct TransactionStore {
     // main DS
+    // 收集到所有合法的交易
     transactions: HashMap<AccountAddress, AccountTransactions>,
 
     // indexes
+    // 按照gas_price, expiration_time, address, sequence_number顺序排序的所有可以打包的Tx
     priority_index: PriorityIndex,
+
     // TTLIndex based on client-specified expiration time
+    // 这个过期时间是用户提交的，这个时间虽然是Duration，但是其实也是绝对时间，保存所有合法的Tx
     expiration_time_index: TTLIndex,
     // TTLIndex based on system expiration time
     // we keep it separate from `expiration_time_index` so Mempool can't be clogged
     //  by old transactions even if it hasn't received commit callbacks for a while
+    // 这个时间是由mempool控制，在进入缓冲池的时候会设置成当前的时间加上过期时间，保存所有合法的Tx
     system_ttl_index: TTLIndex,
+
+    // 里面保存着timeline_id, 用于mempool之间的Tx同步，这里面按序保存着可以打包的Tx
     timeline_index: TimelineIndex,
+
     // keeps track of "non-ready" txns (transactions that can't be included in next block)
+    // 暂时不满足条件，不能打包的Tx
     parking_lot_index: ParkingLotIndex,
 
     // configuration

@@ -8,6 +8,18 @@ custom_edit_url: https://github.com/libra/libra/edit/master/mempool/README.md
 Mempool is a memory-buffer that holds the transactions that are waiting to be executed.
 1. 内存池是一个缓冲区，用于保证正等待执行的交易
 2. 当新交易添加到验证器节点的内存池时，此验证器节点的内存池与系统中其他验证器的内存池共享此交易
+
+1. 接收本地收到的Tx并验证
+2. 和其他节点之间互相同步Tx
+
+因为Libra使用的是不会分叉的PBFT，所以缓冲池的实现以及管理要简单许多。
+
+交易主要是seq_number连起来的，同时Libra中也有和以太坊一样的GasPrice概念，因此如果对于同一账号，seq_number相同的情况下，会选择GasPrice高的那个，
+可以看出实际上Libra唯一的ID可以不认为是交易数据的哈希值，可以把(Address, seq_number)作为唯一的ID，这个在比特币以太坊等公链中也行得通，
+因为Libra中把(Address, seq_number)二元组作为Tx唯一的ID，所以其代码设计中对于Tx的管理和以太坊也不太一样
+
+mempool可以通俗的认为就是一个HashMap<AccountAddress, BTreeMap<u64, MempoolTransaction>>,其中这里的u64就是对应账户的seq_number.其所有
+功能都是围绕这个数据结构展开。
 ## Overview
 
 Admission control (AC) module sends transactions to mempool. Mempool holds the transactions for a period of time, before consensus commits them. When a new transaction is added, mempool shares this transaction with other validators (validator nodes) in the system. Mempool is a “shared mempool,” as transactions between mempools are shared with other validators. This helps maintain a pseudo-global ordering.

@@ -22,6 +22,7 @@ use schemadb::{
 };
 use std::mem::size_of;
 
+/// define_schema! 宏在这里使用了
 define_schema!(TransactionSchema, Version, Transaction, TRANSACTION_CF_NAME);
 
 impl KeyCodec<TransactionSchema> for Version {
