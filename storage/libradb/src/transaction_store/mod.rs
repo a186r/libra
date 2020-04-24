@@ -16,6 +16,11 @@ use libra_types::{
 use schemadb::DB;
 use std::sync::Arc;
 
+/**
+    mempool模块对于Tx的管理核心都集中在TransactionStore这个结构，他对外对接的是CoreMemPool结构，从TransactionStore
+    可以清楚的看出缓冲池中Tx增删改查的逻辑
+*/
+
 pub(crate) struct TransactionStore {
     db: Arc<DB>,
 }

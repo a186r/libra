@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /// This module provides various indexes used by Mempool
+/// 为了管理Tx，在TransactionStore同时用到了好几种索引方式，都在这里了
 use crate::core_mempool::transaction::{MempoolTransaction, TimelineState};
 use libra_types::account_address::AccountAddress;
 use std::{
@@ -20,6 +21,7 @@ pub type AccountTransactions = BTreeMap<u64, MempoolTransaction>;
 ///
 /// We don't store full content of transaction in index
 /// Instead we use `OrderedQueueKey` - logical reference to transaction in main store
+/// 看名称是一个优先级队列，内部使用BTreeSet进行组织，OrderedQueueKey就是排序方式，依次是gas_price\expiration_time\address\sequence_number
 pub struct PriorityIndex {
     data: BTreeSet<OrderedQueueKey>,
 }
@@ -66,6 +68,8 @@ impl PriorityIndex {
     }
 }
 
+// 排序方式
+// 这里用到了Rust中的运算符重载
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 pub struct OrderedQueueKey {
     pub gas_price: u64,
@@ -80,6 +84,7 @@ impl PartialOrd for OrderedQueueKey {
     }
 }
 
+// 如果一个自定义结构想实现<,>,==，那么可以实现Ord这个trait
 impl Ord for OrderedQueueKey {
     fn cmp(&self, other: &OrderedQueueKey) -> Ordering {
         match self.gas_price.cmp(&other.gas_price) {
@@ -103,6 +108,8 @@ impl Ord for OrderedQueueKey {
 /// removed Index is represented as `BTreeSet<TTLOrderingKey>`
 ///   where `TTLOrderingKey` is logical reference to TxnInfo
 /// Index is ordered by `TTLOrderingKey::expiration_time`
+/// 这个是按照过期时间排序，过期时间总共有两种，一种是在缓冲池中呆太久了，另一种是用户指定的过期时间。
+/// get_expiration_time这个回调函数就是用来从MempoolTransaction获取不同的时间用的
 pub struct TTLIndex {
     data: BTreeSet<TTLOrderingKey>,
     get_expiration_time: Box<dyn Fn(&MempoolTransaction) -> Duration + Send + Sync>,
@@ -157,6 +164,7 @@ impl TTLIndex {
     }
 }
 
+// 自定义结构
 #[derive(Eq, PartialEq, PartialOrd, Clone, Debug)]
 pub struct TTLOrderingKey {
     pub expiration_time: Duration,
@@ -164,6 +172,7 @@ pub struct TTLOrderingKey {
     pub sequence_number: u64,
 }
 
+// 实现Ord trait
 impl Ord for TTLOrderingKey {
     fn cmp(&self, other: &TTLOrderingKey) -> Ordering {
         match self.expiration_time.cmp(&other.expiration_time) {
@@ -182,9 +191,10 @@ impl Ord for TTLOrderingKey {
 /// It's represented as Map <timeline_id, (Address, sequence_number)>
 ///    where timeline_id is auto increment unique id of "ready" transaction in local Mempool
 ///    (Address, sequence_number) is a logical reference to transaction content in main storage
+/// 这个索引方式主要是服务节点间同步，为每一个Tx都给予一个唯一的编号，这样向其他节点推送Tx的时候只需要记住一个整数就知道下一次从什么位置开始推送了
 pub struct TimelineIndex {
-    timeline_id: u64,
-    timeline: BTreeMap<u64, (AccountAddress, u64)>,
+    timeline_id: u64, // 唯一的编号
+    timeline: BTreeMap<u64, (AccountAddress, u64)>, // 是timeline_id到Tx ID的映射。
 }
 
 impl TimelineIndex {
@@ -236,6 +246,8 @@ impl TimelineIndex {
 /// e.g. transactions that can't be included in next block
 /// (because their sequence number is too high)
 /// we keep separate index to be able to efficiently evict them when Mempool is full
+/// 主要是记录那些因为seq_number不连续还不能被打包的Tx，一旦来了新的交易就有可能让不连续的seq_number变成连续的
+/// 或者打包的块中更新了seq_number，从而也可能连起来
 pub struct ParkingLotIndex {
     data: BTreeSet<TxnPointer>,
 }

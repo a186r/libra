@@ -26,6 +26,7 @@ use std::{
 };
 
 /// TransactionStore is in-memory storage for all transactions in mempool
+/// 我们所提到的各种Index，都是用的有序BTreeMap，BTreeSet本身就是一种特殊的BTreeMap
 pub struct TransactionStore {
     // main DS
     // 收集到所有合法的交易
@@ -63,6 +64,7 @@ impl TransactionStore {
             transactions: HashMap::new(),
 
             // various indexes
+            // 各种排序
             system_ttl_index: TTLIndex::new(Box::new(|t: &MempoolTransaction| t.expiration_time)),
             expiration_time_index: TTLIndex::new(Box::new(|t: &MempoolTransaction| {
                 t.txn.expiration_time()
@@ -78,6 +80,7 @@ impl TransactionStore {
     }
 
     /// fetch transaction by account address + sequence_number
+    /// 根据nonce查
     pub(crate) fn get(
         &self,
         address: &AccountAddress,
@@ -129,6 +132,7 @@ impl TransactionStore {
 
         if let Some(txns) = self.transactions.get_mut(&address) {
             // capacity check
+            // 校验容量
             if txns.len() >= self.capacity_per_user {
                 return MempoolAddTransactionStatus::new(
                     MempoolAddTransactionStatusCode::TooManyTransactions,
@@ -141,6 +145,7 @@ impl TransactionStore {
             }
 
             // insert into storage and other indexes
+            // 新增的同时建立各种索引
             self.system_ttl_index.insert(&txn);
             self.expiration_time_index.insert(&txn);
             txns.insert(sequence_number, txn);
@@ -246,6 +251,7 @@ impl TransactionStore {
         // nodes has sent the transaction to consensus but this node still has the
         // transaction sitting in mempool
         if let Some(txns) = self.transactions.get_mut(&address) {
+            // 小于sequence_number的都要被移除
             let mut active = txns.split_off(&sequence_number);
             let txns_for_removal = txns.clone();
             txns.clear();
@@ -260,6 +266,7 @@ impl TransactionStore {
     /// handles transaction commit
     /// it includes deletion of all transactions with sequence number <= `account_sequence_number`
     /// and potential promotion of sequential txns to PriorityIndex/TimelineIndex
+    /// 删除已经被打包的交易
     pub(crate) fn commit_transaction(
         &mut self,
         account: &AccountAddress,
@@ -278,6 +285,7 @@ impl TransactionStore {
     }
 
     /// removes transaction from all indexes
+    /// 从各种排序中移除
     fn index_remove(&mut self, txn: &MempoolTransaction) {
         self.system_ttl_index.remove(&txn);
         self.expiration_time_index.remove(&txn);
@@ -324,7 +332,9 @@ impl TransactionStore {
     }
 
     /// GC old transactions
+    /// 删除迟迟不能被打包的交易
     pub(crate) fn gc_by_system_ttl(&mut self) {
+        // 清除所有过期的交易，这里虽然设置的是now，但是因为加入的时候都会在过期时间上加上一段时间,因此不担心会清理掉所有的交易
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("init timestamp failure");
@@ -333,6 +343,7 @@ impl TransactionStore {
     }
 
     /// GC old transactions based on client-specified expiration time
+    /// 过了用户指定时间的也要删掉
     pub(crate) fn gc_by_expiration_time(&mut self, block_time: Duration) {
         self.gc(block_time, false);
     }
