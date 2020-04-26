@@ -58,6 +58,7 @@ use ed25519_dalek::{
 };
 use libra_crypto_derive::Deref;
 use serde::{Deserialize, Serialize};
+use regex::internal::Input;
 
 const SUITE: u8 = 0x03;
 const ONE: u8 = 0x01;
@@ -182,6 +183,7 @@ impl VRFPublicKey {
         }
     }
 
+    // alpha是VRF的输入源
     pub(super) fn hash_to_curve(&self, alpha: &[u8]) -> EdwardsPoint {
         let mut result = [0u8; 32];
         let mut counter = 0;

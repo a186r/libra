@@ -30,9 +30,11 @@ static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 fn main() {
     let args = Args::from_args();
 
+    // 使用setup_executable来解析参数，获取系统配置以及日志。
     let (mut config, _logger) =
         setup_executable(args.config.as_ref().map(PathBuf::as_path), args.no_logging);
 
+    // 配置节点环境
     let _node_handle = libra_node::main_node::setup_environment(&mut config);
 
     let term = Arc::new(AtomicBool::new(false));

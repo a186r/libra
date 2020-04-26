@@ -171,6 +171,7 @@ impl GRPCClient {
         &mut self,
         requested_items: Vec<RequestItem>,
     ) -> Result<UpdateToLatestLedgerResponse> {
+        // 异步转换为同步，同时多次尝试
         let mut resp: Result<UpdateToLatestLedgerResponse> =
             self.get_with_proof(requested_items.clone());
         let mut try_cnt = 0_u64;

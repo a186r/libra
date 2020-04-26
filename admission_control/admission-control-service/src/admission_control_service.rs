@@ -18,6 +18,8 @@ use libra_types::proto::types::{UpdateToLatestLedgerRequest, UpdateToLatestLedge
 use std::convert::TryFrom;
 use std::sync::Arc;
 use storage_client::StorageRead;
+use admission_control_proto::SubmitTransactionResponse;
+use libra_types::get_with_proof::{UpdateToLatestLedgerRequest, UpdateToLatestLedgerResponse};
 
 /// Struct implementing trait (service handle) AdmissionControlService.
 #[derive(Clone)]
@@ -70,11 +72,17 @@ impl AdmissionControlService {
     }
 }
 
+/// AC基本就干了两件事，提供了两个接口，一个是submit_transaction，另一个是update_to_latest_ledger
 #[tonic::async_trait]
 impl AdmissionControl for AdmissionControlService {
     /// Submit a transaction to the validator this AC instance connecting to.
     /// The specific transaction will be first validated by VM and then passed
     /// to Mempool for further processing.
+    /// 这个模块主要是接受来自用户的Tx，如果合理有效则提交给mempool模块，最终会进入block中
+    /// 工作流程如下：
+    /// 1.校验Tx，包括三个部分，一个是签名是否有效，另一个则是gas是否有效，第三个是执行Tx中的code是否能够通过
+    /// 2.校验账户余额是否足够，然后通过grpc链接发送给mempool模块
+    /// 3.将mempool结果返回给用户
     async fn submit_transaction(
         &self,
         request: tonic::Request<SubmitTransactionRequest>,

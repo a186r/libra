@@ -37,6 +37,7 @@ use storage_proto::proto::storage::{
     GetStartupInfoResponse, GetTransactionsRequest, GetTransactionsResponse,
     SaveTransactionsRequest, SaveTransactionsResponse, Storage,
 };
+use storage_proto::SaveTransactionsRequest;
 
 /// Starts storage service according to config.
 pub fn start_storage_service(config: &NodeConfig) -> ServerHandle {
