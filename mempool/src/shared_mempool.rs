@@ -28,6 +28,7 @@ use tokio::{
     time::interval,
 };
 use vm_validator::vm_validator::{get_account_state, TransactionValidation};
+use futures::task::SpawnExt;
 
 /// state of last sync with peer
 /// `timeline_id` is position in log of ready transactions
@@ -110,10 +111,12 @@ fn lost_peer(peer_info: &Mutex<PeerInfo>, peer_id: PeerId) {
 
 /// sync routine
 /// used to periodically broadcast ready to go transactions to peers
+/// 针对每个节点推送所有来自自身AC模块的Tx。为了避免重复使用，使用了timeline_id这个技术
+/// 也就是对每一个Tx进行编号，并且这个编号是单增的，这样在节点A推送的时候只需要记住上次推送到了第n个，下次从第n+1推送即可。
 async fn sync_with_peers<'a>(
-    peer_info: &'a Mutex<PeerInfo>,
-    mempool: &'a Mutex<CoreMempool>,
-    network_sender: &'a mut MempoolNetworkSender,
+    peer_info: &'a Mutex<PeerInfo>, // 一个所有其他节点的Map
+    mempool: &'a Mutex<CoreMempool>, // 自己的内存池
+    network_sender: &'a mut MempoolNetworkSender,// 广播消息的通道
     batch_size: usize,
 ) {
     // Clone the underlying peer_info map and use this to sync and collect
@@ -152,6 +155,7 @@ async fn sync_with_peers<'a>(
                 );
                 // Since this is a direct-send, this will only error if the network
                 // module has unexpectedly crashed or shutdown.
+                // 向指定的peer_id推送transactions数组
                 network_sender
                     .send_to(peer_id, msg)
                     .await
@@ -166,6 +170,7 @@ async fn sync_with_peers<'a>(
     let mut peer_info = peer_info
         .lock()
         .expect("[shared mempool] failed to acquire peer_info lock");
+    // 更新相应节点的timeline_id，不要重复推送了
     for (peer_id, new_timeline_id) in state_updates {
         peer_info
             .entry(peer_id)
@@ -223,6 +228,7 @@ async fn process_incoming_transactions<V>(
                     gas_cost,
                     sequence_number,
                     balance,
+                    // tx不会再被广播给其他节点，好处是极大的降低了数据传输量，这种方式在以太坊中肯定是不会采用的，因为这很不利于Tx的快速广播
                     TimelineState::NonQualified,
                 );
                 OP_COUNTERS.inc(&format!(
@@ -242,6 +248,7 @@ async fn process_incoming_transactions<V>(
 
 /// This task handles [`SyncEvent`], which is periodically emitted for us to
 /// broadcast ready to go transactions to peers.
+/// 向外广播来自AC的Tx
 async fn outbound_sync_task<V>(smp: SharedMempool<V>, mut interval: IntervalStream)
 where
     V: TransactionValidation,
@@ -252,6 +259,13 @@ where
     let batch_size = smp.config.shared_mempool_batch_size;
     let subscribers = smp.subscribers;
 
+    // 定时死循环，这个执行到await的
+    /**
+        当代码执行到await里面的时候，发现异步操作还没有完成，它会直接退出当前这个函数，把CPU让给其他任务执行，
+        当这个数据从网络上传输完成了，调度器会再次调用这个函数。
+        它会从上次中断的地方回复执行，所以使用async/await的语法写代码，异步代码的逻辑在源码组织上跟同步代码的逻辑差别并不大，
+        这里面状态保存和恢复这些琐碎的事情，由编译器帮我们完成了。
+    */
     while let Some(sync_event) = interval.next().await {
         trace!("SyncEvent: {:?}", sync_event);
         sync_with_peers(&peer_info, &mempool, &mut network_sender, batch_size).await;
@@ -262,6 +276,7 @@ where
 }
 
 /// This task handles inbound network events.
+/// 接收来自底层Network模块的信息推送
 async fn inbound_network_task<V>(
     smp: SharedMempool<V>,
     executor: Handle,
@@ -277,20 +292,25 @@ async fn inbound_network_task<V>(
     let workers_available = smp.config.shared_mempool_max_concurrent_inbound_syncs;
     let bounded_executor = BoundedExecutor::new(workers_available, executor);
 
+    // while循环，永远不结束
     while let Some(event) = network_events.next().await {
         trace!("SharedMempoolEvent::NetworkEvent::{:?}", event);
         match event {
             Ok(network_event) => match network_event {
                 Event::NewPeer(peer_id) => {
                     OP_COUNTERS.inc("smp.event.new_peer");
+                    // 有新的节点上线
                     new_peer(&peer_info, peer_id);
                     notify_subscribers(SharedMempoolNotification::PeerStateChange, &subscribers);
                 }
                 Event::LostPeer(peer_id) => {
                     OP_COUNTERS.inc("smp.event.lost_peer");
+                    // 节点下线
                     lost_peer(&peer_info, peer_id);
                     notify_subscribers(SharedMempoolNotification::PeerStateChange, &subscribers);
                 }
+
+                // message主要就是其他节点推送来的新的Tx
                 Event::Message((peer_id, msg)) => {
                     OP_COUNTERS.inc("smp.event.message");
                     let transactions: Vec<_> = msg
@@ -312,6 +332,8 @@ async fn inbound_network_task<V>(
                         &format!("smp.transactions.received.{:?}", peer_id),
                         transactions.len(),
                     );
+                    // 验证Tx的有效性然后添加到自己的缓冲池中，添加过程调用的是add_txn
+                    // 和处理来自AC的Tx是一样的逻辑
                     bounded_executor
                         .spawn(process_incoming_transactions(
                             smp.clone(),
@@ -339,8 +361,14 @@ async fn inbound_network_task<V>(
 }
 
 /// GC all expired transactions by SystemTTL
+/// 过期交易回收机制
 async fn gc_task(mempool: Arc<Mutex<CoreMempool>>, gc_interval_ms: u64) {
     let mut interval = interval(Duration::from_millis(gc_interval_ms));
+    // 定期调用gc_by_system_ttl，避免Tx在缓冲池中呆过久，占用空间，从而导致可以打包的交易进不到缓冲池中。
+    // 以太坊采用了不同的处理方案，以太坊中如果是直接受到的Tx会保存在transactions.rlp这个文件中，就算是发生拥堵也不会丢失。
+
+    // 但是Libra这种设计，如果发生了拥堵，交易丢失了如何解决，也许Libra中Tx有过期机制，一旦过期，client就认为交易失败了
+    // 如果想要继续，就应该重新发送
     while let Some(_interval) = interval.next().await {
         mempool
             .lock()
@@ -359,11 +387,11 @@ async fn gc_task(mempool: Arc<Mutex<CoreMempool>>, gc_interval_ms: u64) {
 pub(crate) fn start_shared_mempool<V>(
     config: &NodeConfig,
     mempool: Arc<Mutex<CoreMempool>>,
-    network_sender: MempoolNetworkSender,
-    network_events: MempoolNetworkEvents,
+    network_sender: MempoolNetworkSender, // 向其他节点推送新发现的Tx的Channel
+    network_events: MempoolNetworkEvents, // 接受来自其他节点的Mempool事件的Channel
     storage_read_client: Arc<dyn StorageRead>,
     validator: Arc<V>,
-    subscribers: Vec<UnboundedSender<SharedMempoolNotification>>,
+    subscribers: Vec<UnboundedSender<SharedMempoolNotification>>, // 这个是通知其他模块，mempool发生了什么他们感兴趣的事情
     timer: Option<IntervalStream>,
 ) -> Runtime
 where
@@ -375,6 +403,8 @@ where
         .enable_all()
         .build()
         .expect("[shared mempool] failed to create runtime");
+
+    // 获取runtime的Executor，这样后续就可以启动task了
     let executor = runtime.handle();
 
     let peer_info = Arc::new(Mutex::new(PeerInfo::new()));

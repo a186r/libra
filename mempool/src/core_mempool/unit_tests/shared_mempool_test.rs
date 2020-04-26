@@ -45,21 +45,24 @@ impl SharedMempoolNetwork {
 
         for peer in peers {
             let mempool = Arc::new(Mutex::new(CoreMempool::new(&config)));
+            // 消息是一条通道
             let (network_reqs_tx, network_reqs_rx) = channel::new_test(8);
+            // 通知是另一条通道
             let (network_notifs_tx, network_notifs_rx) = channel::new_test(8);
             let network_sender = MempoolNetworkSender::new(network_reqs_tx);
             let network_events = MempoolNetworkEvents::new(network_notifs_rx);
+            // unbounded是创建没有缓冲区大小限制的channel
             let (sender, subscriber) = unbounded();
             let (timer_sender, timer_receiver) = unbounded();
 
             let runtime = start_shared_mempool(
                 &config,
                 Arc::clone(&mempool),
-                network_sender,
-                network_events,
+                network_sender,// 我向外发送，其他人接收
+                network_events,// 我接收其他人发送过来的event
                 Arc::new(MockStorageReadClient),
                 Arc::new(MockVMValidator),
-                vec![sender],
+                vec![sender], // 向外发布订阅
                 Some(timer_receiver.map(|_| SyncEvent).boxed()),
             );
 
@@ -85,9 +88,16 @@ impl SharedMempoolNetwork {
         }
     }
 
+    // 向指定peer发送事件，
     fn send_event(&mut self, peer: &PeerId, notif: NetworkNotification) {
         let network_notifs_tx = self.network_notifs_txs.get_mut(peer).unwrap();
+        /**
+            block_on和async，await的区别
+            1.block_on在普通函数中使用，await只能在标有async的函数中使用
+            2.block_on会真实的堵塞所在线程，而await只会堵塞所在task，actor可以调度其他任务来运行
+        */
         block_on(network_notifs_tx.send(notif)).unwrap();
+
         self.wait_for_event(peer, SharedMempoolNotification::PeerStateChange);
     }
 
@@ -99,6 +109,7 @@ impl SharedMempoolNetwork {
     }
 
     /// deliveres next message from given node to it's peer
+    /// 接收peer广播出来的tx
     fn deliver_message(&mut self, peer: &PeerId) -> (SignedTransaction, PeerId) {
         // emulate timer tick
         self.timers
@@ -129,6 +140,7 @@ impl SharedMempoolNetwork {
                 // verify transaction was inserted into Mempool
                 let mempool = self.mempools.get(&peer_id).unwrap();
                 let block = mempool.lock().unwrap().get_block(100, HashSet::new());
+                // 确保这个广播出去的Tx会被打包，也就是不会广播自己认为无效的Tx，以及自己认为seq不连续的Tx。
                 assert!(block.iter().any(|t| t == &transaction));
                 (transaction, peer_id)
             }
@@ -152,7 +164,9 @@ impl SharedMempoolNetwork {
 fn test_basic_flow() {
     let (peer_a, peer_b) = (PeerId::random(), PeerId::random());
 
+    // 建立起每个节点的通信channel
     let mut smp = SharedMempoolNetwork::bootstrap(vec![peer_a, peer_b]);
+    // 主动添加三笔连续交易
     smp.add_txns(
         &peer_a,
         vec![
